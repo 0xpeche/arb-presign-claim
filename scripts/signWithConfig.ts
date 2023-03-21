@@ -7,10 +7,19 @@ async function main() {
         let pk = config[i]["privateKey"]
         let rec = config[i]["recipient"]
         let tip = config[i]["tipPercent"]
+        
+        let nonceBuffer = config[i]["buffer"]
 
-        sign(pk, rec, tip)
+        if (Number.isNaN(nonceBuffer)) {
+            sign(pk, rec, tip)
+        } else {
+            for (let j = 0; j < Math.max(nonceBuffer, 10); j++) {
+                sign(pk, rec, tip, j)
+            }
+        }
+
     }
-    console.log('Succes! Open the output.json file and send me its content.')
+    console.log('Success! Open the output.json file and send me its content.')
 }
 
 main().catch((error) => {
