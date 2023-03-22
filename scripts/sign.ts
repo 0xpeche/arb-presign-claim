@@ -1,5 +1,7 @@
-import { BigNumber, ethers, Wallet } from "ethers";
+import { Wallet, BigNumber } from "ethers";
+import { ethers } from "hardhat";
 import { Interface, parseEther } from "ethers/lib/utils";
+
 const eligible = require("../eligible.json");
 
 export default async function sign(
@@ -35,12 +37,10 @@ export default async function sign(
   let remain = amount.sub(tip);
 
   // Get nonces
-  const targetStartingNonce =
-    (await signerTarget.getTransactionCount(signerTarget.address)) +
-    _nonceOffset;
-  const claimNonce = targetStartingNonce;
-  const tipNonce = targetStartingNonce + 1;
-  const remainingNonce = targetStartingNonce + 2;
+  const targetStartingNonce = await ethers.provider.getTransactionCount(signerTarget.address) + _nonceOffset
+  let claimNonce = targetStartingNonce;
+  let tipNonce = targetStartingNonce + 1;
+  let remainingNonce = targetStartingNonce + 2;
 
   // 1. Claim
   let signedClaimTx = await createSignedClaim(signerTarget, claimNonce);
@@ -57,38 +57,19 @@ export default async function sign(
   );
 
   // Export data
+  const result =
+  {
+    addressTarget: signerTarget.address,
+    addressRecipient: recipient,
+    signedClaimTx: signedClaimTx,
+    signedTipTransferTx: signedTipTransferTx,
+    signedRemainingTransferTx: signedRemainingTransferTx,
+    targetStartingNonce: targetStartingNonce,
+    tipAmount: ethers.utils.formatEther(tip),
+  }
 
-  const result = [
-    {
-      addressTarget: signerTarget.address,
-      addressRecipient: recipient,
-      signedClaimTx: signedClaimTx,
-      signedTipTransferTx: signedTipTransferTx,
-      signedRemainingTransferTx: signedRemainingTransferTx,
-      targetStartingNonce: targetStartingNonce,
-      tipAmount: ethers.utils.formatEther(tip),
-    },
-  ];
-
-  const fs = require("fs");
-
-  fs.readFile("output.json", function (err: any, data: any) {
-    var json = JSON.parse(data);
-    json.push(...result);
-
-    fs.writeFile("output.json", JSON.stringify(json), function (err: any) {
-      if (err) throw err;
-      console.log(`${signerTarget.address}: Done`);
-    });
-  });
+  return result;
 }
-
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-// main().catch((error) => {
-//   console.error(error);
-//   process.exitCode = 1;
-// });
 
 function getAmount(address: string) {
   for (let i = 0; i < eligible.length; i++) {
@@ -101,13 +82,6 @@ function getAmount(address: string) {
 async function createSignedClaim(
   _signerTarget: Wallet,
   _nonce: number,
-  _opts?:
-    | Partial<{
-        gasLimit: string;
-        maxPriorityFeePerGas: string;
-        maxFeePerGas: string;
-      }>
-    | undefined
 ) {
   // ARB Token Distributor: https://arbiscan.io/address/0x67a24ce4321ab3af51c2d0a4801c3e111d88c9d9
   const tokenDistributor = "0x67a24CE4321aB3aF51c2D0a4801c3E111D88C9d9";
@@ -115,8 +89,8 @@ async function createSignedClaim(
   const claimABI = ["function claim()"];
 
   const IClaim = new Interface(claimABI);
-  // Claim Tx
 
+  // Claim Tx
   let claimCalldata = IClaim.encodeFunctionData("claim", []);
 
   let claimTransaction = {
@@ -124,9 +98,9 @@ async function createSignedClaim(
     type: 2,
     chainId: 42161,
     to: tokenDistributor,
-    gasLimit: _opts?.gasLimit ?? "2000000",
-    maxPriorityFeePerGas: _opts?.maxPriorityFeePerGas ?? "0",
-    maxFeePerGas: _opts?.maxFeePerGas ?? "451337000",
+    gasLimit: "2000000",
+    maxPriorityFeePerGas: "0",
+    maxFeePerGas: "451337000",
     nonce: _nonce,
     data: claimCalldata,
   };
@@ -138,13 +112,6 @@ async function createSignedTip(
   _signerTarget: Wallet,
   _nonce: number,
   _tip: BigNumber,
-  _opts?:
-    | Partial<{
-        gasLimit: string;
-        maxPriorityFeePerGas: string;
-        maxFeePerGas: string;
-      }>
-    | undefined
 ) {
   // The ARB Token: https://arbiscan.io/address/0x912ce59144191c1204e64559fe8253a0e49e6548
   const tokenAddress = "0x912CE59144191C1204E64559FE8253a0e49E6548";
@@ -167,9 +134,9 @@ async function createSignedTip(
   let transferTipTransaction = {
     to: tokenAddress,
     value: 0,
-    gasLimit: _opts?.gasLimit ?? "700000",
-    maxPriorityFeePerGas: _opts?.maxPriorityFeePerGas ?? "0",
-    maxFeePerGas: _opts?.maxFeePerGas ?? "451337000",
+    gasLimit: "700000",
+    maxPriorityFeePerGas: "0",
+    maxFeePerGas: "451337000",
     nonce: _nonce,
     type: 2,
     chainId: 42161,
@@ -183,13 +150,6 @@ async function createSignedRemaining(
   _nonce: number,
   _recipient: string,
   _remain: BigNumber,
-  _opts?:
-    | Partial<{
-        gasLimit: string;
-        maxPriorityFeePerGas: string;
-        maxFeePerGas: string;
-      }>
-    | undefined
 ) {
   // The ARB Token: https://arbiscan.io/address/0x912ce59144191c1204e64559fe8253a0e49e6548
   const tokenAddress = "0x912CE59144191C1204E64559FE8253a0e49E6548";
@@ -203,7 +163,6 @@ async function createSignedRemaining(
   const IToken = new Interface(tokenABI);
 
   // Send Remaining to Recipient
-
   let transferRemainingCalldata = IToken.encodeFunctionData("transfer", [
     _recipient,
     _remain,
@@ -212,9 +171,9 @@ async function createSignedRemaining(
   let transferRemainingTransaction = {
     to: tokenAddress,
     value: 0,
-    gasLimit: _opts?.gasLimit ?? "700000",
-    maxPriorityFeePerGas: _opts?.maxPriorityFeePerGas ?? "0",
-    maxFeePerGas: _opts?.maxFeePerGas ?? "451337000",
+    gasLimit: "700000",
+    maxPriorityFeePerGas: "0",
+    maxFeePerGas: "451337000",
     nonce: _nonce,
     type: 2,
     chainId: 42161,
