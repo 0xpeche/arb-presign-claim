@@ -2,6 +2,7 @@
     {
         "privateKey": "your_first_compromised_private_key",
         "recipient": "your_recipient_address",
-        "tipPercent": "10"
+        "tipPercent": "10",
+        "buffer": 10
     }
 ]
