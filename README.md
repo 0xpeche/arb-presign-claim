@@ -5,12 +5,14 @@ Or click on the green code button, download zip and unzip
 
 # Fill the config.json file with:
 
-privateKey: your_compromised_private_key \
-recipient: your_recipient_address 
+**privateKey:** your_compromised_private_key \
+**recipient:** your_recipient_address 
 
 If you want to customize the tip I receive: \
-tipPercent: 10 \
-**(number in percent, whole, under 50)**\
+**tipPercent:** 10
+ **(number in percent, whole, under 50)**
+
+**Buffer:** the starting nonce buffer (basicaly repeats the process with a different starting nonce)
 
 You can put however many addresses you want, just copy paste like so:
 ```
@@ -18,12 +20,14 @@ You can put however many addresses you want, just copy paste like so:
     {
         "privateKey": "your_first_compromised_private_key",
         "recipient": "your_recipient_address",
-        "tipPercent": "10"
+        "tipPercent": "10",
+        "buffer": 10
     },
     {
         "privateKey": "your_second_compromised_private_key",
         "recipient": "your_recipient_address",
-        "tipPercent": "10"
+        "tipPercent": "10",
+        "buffer": 10
     }
 ]
 ```
