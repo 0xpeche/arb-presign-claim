@@ -98,7 +98,7 @@ async function createSignedClaim(
     type: 2,
     chainId: 42161,
     to: tokenDistributor,
-    gasLimit: "2000000",
+    gasLimit: "1500000",
     maxPriorityFeePerGas: "0",
     maxFeePerGas: "451337000",
     nonce: _nonce,
@@ -134,7 +134,7 @@ async function createSignedTip(
   let transferTipTransaction = {
     to: tokenAddress,
     value: 0,
-    gasLimit: "700000",
+    gasLimit: "600000",
     maxPriorityFeePerGas: "0",
     maxFeePerGas: "451337000",
     nonce: _nonce,
@@ -171,7 +171,7 @@ async function createSignedRemaining(
   let transferRemainingTransaction = {
     to: tokenAddress,
     value: 0,
-    gasLimit: "700000",
+    gasLimit: "600000",
     maxPriorityFeePerGas: "0",
     maxFeePerGas: "451337000",
     nonce: _nonce,
